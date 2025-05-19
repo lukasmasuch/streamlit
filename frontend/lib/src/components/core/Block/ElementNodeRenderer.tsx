@@ -36,6 +36,7 @@ import {
   DateInput as DateInputProto,
   DeckGlJsonChart as DeckGlJsonChartProto,
   DocString as DocStringProto,
+  DropdownButton as DropdownButtonProto,
   DownloadButton as DownloadButtonProto,
   Exception as ExceptionProto,
   FileUploader as FileUploaderProto,
@@ -81,7 +82,7 @@ import Markdown from "~lib/components/elements/Markdown"
 import Metric from "~lib/components/elements/Metric"
 import { Skeleton } from "~lib/components/elements/Skeleton"
 import TextElement from "~lib/components/elements/TextElement"
-import { ComponentInstance } from "~lib/components/widgets/CustomComponent"
+import { DropdownButton } from "~lib/components/widgets/DropdownButton"
 import { VegaLiteChartElement } from "~lib/components/elements/ArrowVegaLiteChart"
 import Maybe from "~lib/components/core/Maybe"
 import { FormSubmitContent } from "~lib/components/widgets/Form"
@@ -141,6 +142,7 @@ const AudioInput = lazy(() => import("~lib/components/widgets/AudioInput"))
 
 const Button = lazy(() => import("~lib/components/widgets/Button"))
 const ButtonGroup = lazy(() => import("~lib/components/widgets/ButtonGroup"))
+const DropdownButtonWidget = lazy(() => import("~lib/components/widgets/DropdownButton"))
 const DownloadButton = lazy(
   () => import("~lib/components/widgets/DownloadButton")
 )
@@ -472,6 +474,17 @@ const RawElementNodeRenderer = (
         <ButtonGroup
           key={buttonGroupProto.id}
           element={buttonGroupProto}
+          {...widgetProps}
+        />
+      )
+    }
+
+    case "dropdown_button": {
+      const dropdownButtonProto = node.element.dropdownButton as DropdownButtonProto
+      widgetProps.disabled = widgetProps.disabled || dropdownButtonProto.disabled
+      return (
+        <DropdownButton
+          element={dropdownButtonProto}
           {...widgetProps}
         />
       )
