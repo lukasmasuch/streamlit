@@ -208,7 +208,6 @@ const INITIAL_SCRIPT_RUN_ID = "<null>"
 
 export const LOG = getLogger("App")
 
-// eslint-disable-next-line
 declare global {
   interface Window {
     // eslint-disable-next-line @typescript-eslint/no-explicit-any -- TODO: Replace 'any' with a more specific type.
@@ -533,7 +532,7 @@ export class App extends PureComponent<Props, State> {
       }
 
       // @ts-expect-error
-      import("iframe-resizer/js/iframeResizer.contentWindow")
+      void import("iframe-resizer/js/iframeResizer.contentWindow")
     }
 
     this.hostCommunicationMgr.sendMessageToHost({
@@ -547,7 +546,7 @@ export class App extends PureComponent<Props, State> {
   }
 
   override componentDidUpdate(
-    prevProps: Readonly<Props>,
+    _prevProps: Readonly<Props>,
     prevState: Readonly<State>
   ): void {
     // @ts-expect-error
@@ -565,6 +564,7 @@ export class App extends PureComponent<Props, State> {
             ScriptRunState.RUNNING,
             ScriptRunState.NOT_RUNNING
           )
+          // eslint-disable-next-line @typescript-eslint/no-unused-vars
         } catch (err) {
           // It's okay if this fails, the `measure` call is for debugging/profiling
         }
@@ -1070,12 +1070,12 @@ export class App extends PureComponent<Props, State> {
   ): void => {
     const baseUriParts = this.getBaseUriParts()
 
-    // TODO(vdonato): Support the situation where window.__STREAMLIT_BACKEND_BASE_URL
+    // TODO(vdonato): Support the situation where window.__streamlit.BACKEND_BASE_URL
     // is set, so the Streamlit backend URL is set to be different from where
     // we loaded index.html. Until this is done, the browser's back/forward
     // buttons may not work correctly with multipage apps when
-    // window.__STREAMLIT_BACKEND_BASE_URL is set.
-    if (baseUriParts && !window.__STREAMLIT_BACKEND_BASE_URL) {
+    // window.__streamlit.BACKEND_BASE_URL is set.
+    if (baseUriParts && !window.__streamlit?.BACKEND_BASE_URL) {
       const { pathname } = baseUriParts
 
       const prevPageNameInPath = extractPageNameFromPathName(
@@ -1212,6 +1212,7 @@ export class App extends PureComponent<Props, State> {
       SessionInfo.propsFromNewSessionMessage(newSessionProto)
     )
 
+    // eslint-disable-next-line @typescript-eslint/no-floating-promises -- TODO: Fix this
     this.metricsMgr.initialize({
       gatherUsageStats: config.gatherUsageStats,
       sendMessageToHost: this.hostCommunicationMgr.sendMessageToHost,
@@ -1225,11 +1226,11 @@ export class App extends PureComponent<Props, State> {
   /**
    * Handler called when the history state changes, e.g. `popstate` event.
    *
-   * TODO(vdonato): Support the situation where window.__STREAMLIT_BACKEND_BASE_URL
+   * TODO(vdonato): Support the situation where window.__streamlit.BACKEND_BASE_URL
    * is set, so the Streamlit backend URL is set to be different from where
    * we loaded index.html. Until this is done, the browser's back/forward
    * buttons may not work correctly with multipage apps when
-   * window.__STREAMLIT_BACKEND_BASE_URL is set.
+   * window.__streamlit.BACKEND_BASE_URL is set.
    */
   onHistoryChange = (): void => {
     const { currentPageScriptHash } = this.state
@@ -1324,6 +1325,7 @@ export class App extends PureComponent<Props, State> {
       status ===
         ForwardMsg.ScriptFinishedStatus.FINISHED_FRAGMENT_RUN_SUCCESSFULLY
     ) {
+      // eslint-disable-next-line @typescript-eslint/no-floating-promises -- TODO: Fix this
       Promise.resolve().then(() => {
         // Notify any subscribers of this event (and do it on the next cycle of
         // the event loop)
@@ -1659,7 +1661,7 @@ export class App extends PureComponent<Props, State> {
       // click the "Rerun" button in the main menu. In this case, we
       // rerun the current page.
       pageScriptHash = currentPageScriptHash
-    } else if (window.__STREAMLIT_BACKEND_BASE_URL) {
+    } else if (window.__streamlit?.BACKEND_BASE_URL) {
       // We currently don't support navigating directly to a subpage of a
       // multipage app when setting the backend URL of an app to be a different
       // location from where we load index.html. In this case, we set both
@@ -1806,6 +1808,7 @@ export class App extends PureComponent<Props, State> {
       LOG.info(msg)
       this.connectionManager.sendMessage(msg)
     } else {
+      // eslint-disable-next-line @typescript-eslint/no-base-to-string, @typescript-eslint/restrict-template-expressions -- TODO: Fix this
       LOG.error(`Not connected. Cannot send back message: ${msg}`)
     }
   }
@@ -1882,6 +1885,7 @@ export class App extends PureComponent<Props, State> {
       } else {
         windowToPrint = window
       }
+      // eslint-disable-next-line @typescript-eslint/no-unused-vars
     } catch (err) {
       windowToPrint = window
     } finally {

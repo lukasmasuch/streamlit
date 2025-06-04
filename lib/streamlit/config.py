@@ -167,7 +167,7 @@ def set_user_option(key: str, value: Any) -> None:
 
     raise StreamlitAPIException(
         f"{key} cannot be set on the fly. Set as command line option, e.g. "
-        "streamlit run script.py --{key}, or in config.toml instead."
+        f"streamlit run script.py --{key}, or in config.toml instead."
     )
 
 
@@ -226,9 +226,8 @@ def get_options_for_section(section: str) -> dict[str, Any]:
 
 def _create_section(section: str, description: str) -> None:
     """Create a config section and store it globally in this module."""
-    assert section not in _section_descriptions, (
-        f'Cannot define section "{section}" twice.'
-    )
+    if section in _section_descriptions:
+        raise RuntimeError(f'Cannot define section "{section}" twice.')
     _section_descriptions[section] = description
 
 
@@ -293,13 +292,12 @@ def _create_option(
         type_=type_,
         sensitive=sensitive,
     )
-    assert option.section in _section_descriptions, (
-        'Section "{}" must be one of {}.'.format(
-            option.section,
-            ", ".join(_section_descriptions.keys()),
+    if option.section not in _section_descriptions:
+        raise RuntimeError(
+            f'Section "{option.section}" must be one of {", ".join(_section_descriptions.keys())}.'
         )
-    )
-    assert key not in _config_options_template, f'Cannot define option "{key}" twice.'
+    if key in _config_options_template:
+        raise RuntimeError(f'Cannot define option "{key}" twice.')
     _config_options_template[key] = option
     return option
 
@@ -342,11 +340,13 @@ def _delete_option(key: str) -> None:
 
     Only for use in testing.
     """
+    if _config_options is None:
+        raise RuntimeError(
+            "_config_options should always be populated here. This should never happen."
+        )
+
     try:
         del _config_options_template[key]
-        assert _config_options is not None, (
-            "_config_options should always be populated here."
-        )
         del _config_options[key]
     except Exception:  # noqa: S110
         # We don't care if the option already doesn't exist.
@@ -819,6 +819,19 @@ _create_option(
     type_=bool,
 )
 
+_create_option(
+    "server.corsAllowedOrigins",
+    description="""
+        If CORS protection is enabled (when server.enableCORS=True), allows an
+        app developer to set a list of allowed origins that the Streamlit server
+        will accept traffic from.
+
+        This config option does nothing if CORS protection is disabled.
+
+        Example: ['http://example.com', 'https://streamlit.io']
+    """,
+    default_val=[],
+)
 
 _create_option(
     "server.enableXsrfProtection",
@@ -1126,7 +1139,7 @@ _create_theme_options(
         - "sans-serif"
         - "serif"
         - "monospace"
-        - the `font` value for a custom font table under [[theme.fontFaces]]
+        - the `family` value for a custom font table under [[theme.fontFaces]]
         - a comma-separated list of these (as a single string) to specify
           fallbacks
 
@@ -1146,7 +1159,7 @@ _create_theme_options(
         - "sans-serif"
         - "serif"
         - "monospace"
-        - the `font` value for a custom font table under [[theme.fontFaces]]
+        - the `family` value for a custom font table under [[theme.fontFaces]]
         - a comma-separated list of these (as a single string) to specify
           fallbacks
     """,
@@ -1161,7 +1174,7 @@ _create_theme_options(
         - "sans-serif"
         - "serif"
         - "monospace"
-        - the `font` value for a custom font table under [[theme.fontFaces]]
+        - the `family` value for a custom font table under [[theme.fontFaces]]
         - a comma-separated list of these (as a single string) to specify
           fallbacks
 
@@ -1176,7 +1189,7 @@ _create_theme_options(
         An array of fonts to use in your app.
 
         Each font in the array is a table (dictionary) with the following three
-        attributes: font, url, weight, and style.
+        attributes: family, url, weight, and style.
 
         To host a font with your app, enable static file serving with
         `server.enableStaticServing=true`.
@@ -1187,7 +1200,7 @@ _create_theme_options(
         follows:
 
             [[theme.fontFaces]]
-            font = "font_name"
+            family = "font_name"
             url = "app/static/font_file.woff"
             weight = 400
             style = "normal"
@@ -1213,10 +1226,36 @@ _create_theme_options(
 )
 
 _create_theme_options(
+    "buttonRadius",
+    categories=["theme", CustomThemeCategories.SIDEBAR],
+    description="""
+        The radius used as basis for the corners of buttons.
+
+        This can be one of the following:
+        - "none"
+        - "small"
+        - "medium"
+        - "large"
+        - "full"
+        - ...or the number in pixels or rem. For example, you can use "10px",
+          "0.5rem", or "2rem". To follow best practices, use rem instead of
+          pixels when specifying a numeric size.
+    """,
+)
+
+_create_theme_options(
     "borderColor",
     categories=["theme", CustomThemeCategories.SIDEBAR],
     description="""
         The color of the border around elements.
+    """,
+)
+
+_create_theme_options(
+    "dataframeBorderColor",
+    categories=["theme", CustomThemeCategories.SIDEBAR],
+    description="""
+        The color of the border around dataframes and tables.
     """,
 )
 
@@ -1288,7 +1327,8 @@ def get_where_defined(key: str) -> str:
         config_options = get_config_options()
 
         if key not in config_options:
-            raise RuntimeError('Config key "%s" not defined.' % key)
+            msg = f'Config key "{key}" not defined.'
+            raise RuntimeError(msg)
         return config_options[key].where_defined
 
 
@@ -1334,9 +1374,10 @@ def is_manually_set(option_name: str) -> bool:
 def show_config() -> None:
     """Print all config options to the terminal."""
     with _config_lock:
-        assert _config_options is not None, (
-            "_config_options should always be populated here."
-        )
+        if _config_options is None:
+            raise RuntimeError(
+                "_config_options should always be populated here. This should never happen."
+            )
         config_util.show_config(_section_descriptions, _config_options)
 
 
@@ -1359,18 +1400,19 @@ def _set_option(key: str, value: Any, where_defined: str) -> None:
         Tells the config system where this was set.
 
     """
-    assert _config_options is not None, (
-        "_config_options should always be populated here."
-    )
+    if _config_options is None:
+        raise RuntimeError("_config_options should always be populated here.")
+
     if key not in _config_options:
         # Import logger locally to prevent circular references
         from streamlit.logger import get_logger
 
-        LOGGER = get_logger(__name__)
+        logger: Final = get_logger(__name__)
 
-        LOGGER.warning(
-            f'"{key}" is not a valid config option. If you previously had this config '
-            "option set, it may have been removed."
+        logger.warning(
+            '"%s" is not a valid config option. If you previously had this config '
+            "option set, it may have been removed.",
+            key,
         )
 
     else:
@@ -1491,9 +1533,9 @@ def _maybe_read_env_variable(value: Any) -> Any:
             # Import logger locally to prevent circular references
             from streamlit.logger import get_logger
 
-            LOGGER = get_logger(__name__)
+            logger: Final = get_logger(__name__)
 
-            LOGGER.error("No environment variable called %s", var_name)
+            logger.error("No environment variable called %s", var_name)
         else:
             return _maybe_convert_to_number(env_var)
 
@@ -1593,8 +1635,8 @@ def get_config_options(
             # Import logger locally to prevent circular references.
             from streamlit.logger import get_logger
 
-            LOGGER = get_logger(__name__)
-            LOGGER.warning(
+            logger: Final = get_logger(__name__)
+            logger.warning(
                 "An update to the [server] config option section was detected."
                 " To have these changes be reflected, please restart streamlit."
             )
@@ -1614,22 +1656,24 @@ def _check_conflicts() -> None:
     # Import logger locally to prevent circular references
     from streamlit.logger import get_logger
 
-    LOGGER = get_logger(__name__)
+    logger: Final = get_logger(__name__)
 
     if get_option("global.developmentMode"):
-        assert _is_unset("server.port"), (
-            "server.port does not work when global.developmentMode is true."
-        )
+        if not _is_unset("server.port"):
+            raise RuntimeError(
+                "server.port does not work when global.developmentMode is true."
+            )
 
-        assert _is_unset("browser.serverPort"), (
-            "browser.serverPort does not work when global.developmentMode is true."
-        )
+        if not _is_unset("browser.serverPort"):
+            raise RuntimeError(
+                "browser.serverPort does not work when global.developmentMode is true."
+            )
 
     # XSRF conflicts
     if get_option("server.enableXsrfProtection") and (
         not get_option("server.enableCORS") or get_option("global.developmentMode")
     ):
-        LOGGER.warning(
+        logger.warning(
             """
 Warning: the config option 'server.enableCORS=false' is not compatible with
 'server.enableXsrfProtection=true'.

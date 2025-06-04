@@ -170,7 +170,7 @@ const AudioInput: React.FC<Props> = ({
 
       setRecordingUrl(url)
 
-      uploadFiles({
+      void uploadFiles({
         files: [file],
         uploadClient,
         widgetMgr,
@@ -219,6 +219,7 @@ const AudioInput: React.FC<Props> = ({
       setRecordingUrl(null)
       wavesurfer.empty()
       if (deleteFile) {
+        // eslint-disable-next-line @typescript-eslint/no-floating-promises
         uploadClient.deleteFile(deleteFileUrl)
       }
       setDeleteFileUrl(null)
@@ -296,7 +297,8 @@ const AudioInput: React.FC<Props> = ({
       })
     )
 
-    rp.on("record-end", async blob => {
+    rp.on("record-end", blob => {
+      // eslint-disable-next-line @typescript-eslint/no-floating-promises
       transcodeAndUploadFile(blob)
     })
 
@@ -314,7 +316,7 @@ const AudioInput: React.FC<Props> = ({
     // note: intentionally excluding theme so that we don't have to recreate the wavesurfer instance
     // and colors will be updated separately
     // TODO: Update to match React best practices
-    // eslint-disable-next-line react-compiler/react-compiler
+    // eslint-disable-next-line react-hooks/react-compiler
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [transcodeAndUploadFile])
 
@@ -333,6 +335,7 @@ const AudioInput: React.FC<Props> = ({
 
   const onClickPlayPause = useCallback(() => {
     if (wavesurfer) {
+      // eslint-disable-next-line @typescript-eslint/no-floating-promises
       wavesurfer.playPause()
       // This is because we want the time to be the duration of the audio when they stop recording,
       // but once they start playing it, we want it to be the current time. So, once they start playing it
@@ -378,6 +381,7 @@ const AudioInput: React.FC<Props> = ({
       handleClear({ updateWidgetManager: false, deleteFile: true })
     }
 
+    // eslint-disable-next-line @typescript-eslint/no-floating-promises
     recordPlugin.startRecording({ deviceId: audioDeviceId }).then(() => {
       // Update the record button to show the user that they can stop recording
       forceRerender()
@@ -470,6 +474,7 @@ const AudioInput: React.FC<Props> = ({
           isUploading={isUploading}
           isError={isError}
           recordingUrlExists={Boolean(recordingUrl)}
+          // eslint-disable-next-line @typescript-eslint/no-misused-promises
           startRecording={startRecording}
           stopRecording={stopRecording}
           onClickPlayPause={onClickPlayPause}

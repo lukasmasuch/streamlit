@@ -160,8 +160,7 @@ def _verify_np_shape(array: npt.NDArray[Any]) -> npt.NDArray[Any]:
         raise StreamlitAPIException("Numpy shape has to be of length 2 or 3.")
     if len(shape) == 3 and shape[-1] not in (1, 3, 4):
         raise StreamlitAPIException(
-            "Channel can only be 1, 3, or 4 got %d. Shape is %s"
-            % (shape[-1], str(shape))
+            f"Channel can only be 1, 3, or 4 got {shape[-1]}. Shape is {shape}"
         )
 
     # If there's only one channel, convert is to x, y
@@ -416,13 +415,15 @@ def marshall_images(
     else:
         captions = [str(caption)]
 
-    assert isinstance(captions, list), (
-        "If image is a list then caption should be as well"
-    )
-    assert len(captions) == len(images), "Cannot pair %d captions with %d images." % (
-        len(captions),
-        len(images),
-    )
+    if not isinstance(captions, list):
+        raise StreamlitAPIException(
+            "If image is a list then caption should be a list as well."
+        )
+
+    if len(captions) != len(images):
+        raise StreamlitAPIException(
+            f"Cannot pair {len(captions)} captions with {len(images)} images."
+        )
 
     proto_imgs.width = int(width)
     # Each image in an image list needs to be kept track of at its own coordinates.
@@ -435,7 +436,7 @@ def marshall_images(
 
         # We use the index of the image in the input image list to identify this image inside
         # MediaFileManager. For this, we just add the index to the image's "coordinates".
-        image_id = "%s-%i" % (coordinates, coord_suffix)
+        image_id = f"{coordinates}-{coord_suffix}"
 
         proto_img.url = image_to_url(
             single_image, width, clamp, channels, output_format, image_id

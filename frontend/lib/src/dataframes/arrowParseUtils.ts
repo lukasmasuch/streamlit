@@ -110,7 +110,7 @@ function parsePandasIndexData(
       }
 
       // Otherwise, use the index name to get the index column data.
-      const column = table.getChild(indexCol as string)
+      const column = table.getChild(indexCol)
       if (column instanceof Vector && column.type instanceof Null) {
         return null
       }
@@ -140,6 +140,7 @@ function parseHeaderName(name: string, numLevels: number): string[] {
     return JSON.parse(
       name.replace(/\(/g, "[").replace(/\)/g, "]").replace(/'/g, '"')
     )
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
   } catch (e) {
     // Add empty strings for the missing levels
     return [...Array(numLevels - 1).fill(""), name]
@@ -250,7 +251,7 @@ function parsePandasIndexColumnTypes(
             name: indexName,
             pandas_type: PandasRangeIndexType,
             numpy_type: PandasRangeIndexType,
-            metadata: indexCol as PandasRangeIndex,
+            metadata: indexCol,
           },
         }
       }

@@ -87,7 +87,7 @@ const ChildRenderer = (props: BlockPropsWithoutWidth): ReactElement => {
             const childProps = {
               ...props,
               disableFullscreenMode,
-              node: node as ElementNode,
+              node,
             }
 
             const key = getElementId(node.element) || index.toString()
@@ -113,7 +113,7 @@ const ChildRenderer = (props: BlockPropsWithoutWidth): ReactElement => {
             const childProps = {
               ...props,
               disableFullscreenMode,
-              node: node as BlockNode,
+              node,
             }
 
             // TODO: Update to match React best practices
@@ -122,6 +122,7 @@ const ChildRenderer = (props: BlockPropsWithoutWidth): ReactElement => {
           }
 
           // We don't have any other node types!
+          // eslint-disable-next-line @typescript-eslint/no-base-to-string, @typescript-eslint/restrict-template-expressions -- TODO: Fix this
           throw new Error(`Unrecognized AppNode: ${node}`)
         })}
     </>
@@ -254,7 +255,8 @@ const BlockNodeRenderer = (props: BlockPropsWithoutWidth): ReactElement => {
   const { formsData } = useRequiredContext(FormsContext)
 
   const styles = useLayoutStyles({
-    element:
+    element: node.deltaBlock,
+    subElement:
       (node.deltaBlock.type && node.deltaBlock[node.deltaBlock.type]) ||
       undefined,
   })
@@ -304,7 +306,7 @@ const BlockNodeRenderer = (props: BlockPropsWithoutWidth): ReactElement => {
   }
 
   if (node.deltaBlock.expandable) {
-    return (
+    containerElement = (
       <Expander
         empty={node.isEmpty}
         isStale={isStale}
@@ -333,7 +335,7 @@ const BlockNodeRenderer = (props: BlockPropsWithoutWidth): ReactElement => {
     const hasSubmitButton =
       submitButtons !== undefined && submitButtons.length > 0
     const scriptNotRunning = scriptRunState === ScriptRunState.NOT_RUNNING
-    return (
+    containerElement = (
       <Form
         formId={formId}
         clearOnSubmit={clearOnSubmit}
@@ -381,10 +383,17 @@ const BlockNodeRenderer = (props: BlockPropsWithoutWidth): ReactElement => {
       mappedChildProps: JSX.IntrinsicAttributes & BlockPropsWithoutWidth
     ): ReactElement => {
       // avoid circular dependency where Tab uses VerticalBlock but VerticalBlock uses tabs
-      // eslint-disable-next-line @typescript-eslint/no-use-before-define
       return <ContainerContentsWrapper {...mappedChildProps} />
     }
-    const tabsProps: TabProps = { ...childProps, isStale, renderTabContent }
+    // We can't use StyledLayoutWrapper for tabs currently because of the horizontal scrolling
+    // management that is handled in the Tabs component. TODO(lwilby): Investigate whether it makes
+    // sense to consolidate that logic with the StyledLayoutWrapper.
+    const tabsProps: TabProps = {
+      ...childProps,
+      isStale,
+      renderTabContent,
+      width: styles.width,
+    }
     return <Tabs {...tabsProps} />
   }
 

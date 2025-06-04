@@ -41,10 +41,11 @@ export interface TabProps extends BlockPropsWithoutWidth {
   isStale: boolean
   // eslint-disable-next-line @typescript-eslint/no-explicit-any -- TODO: Replace 'any' with a more specific type.
   renderTabContent: (childProps: any) => ReactElement
+  width: React.CSSProperties["width"]
 }
 
 function Tabs(props: Readonly<TabProps>): ReactElement {
-  const { widgetsDisabled, node, isStale } = props
+  const { widgetsDisabled, node, isStale, width } = props
   const { fragmentIdsThisRun, scriptRunState, scriptRunId } =
     useContext(LibContext)
 
@@ -68,7 +69,7 @@ function Tabs(props: Readonly<TabProps>): ReactElement {
       setActiveTabName(allTabLabels[0])
     }
     // TODO: Update to match React best practices
-    // eslint-disable-next-line react-compiler/react-compiler
+    // eslint-disable-next-line react-hooks/react-compiler
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [allTabLabels])
 
@@ -89,7 +90,7 @@ function Tabs(props: Readonly<TabProps>): ReactElement {
     }
 
     // TODO: Update to match React best practices
-    // eslint-disable-next-line react-compiler/react-compiler
+    // eslint-disable-next-line react-hooks/react-compiler
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [node.children.length])
 
@@ -101,6 +102,7 @@ function Tabs(props: Readonly<TabProps>): ReactElement {
       data-testid="stTabs"
       isOverflowing={isOverflowing}
       tabHeight={TAB_HEIGHT}
+      width={width}
     >
       <UITabs
         activateOnFocus

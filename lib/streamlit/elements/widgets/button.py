@@ -818,6 +818,7 @@ class ButtonMixin:
             user_key=key,
             # download_button is not allowed to be used in a form.
             form_id=None,
+            dg=self.dg,
             label=label,
             icon=icon,
             file_name=file_name,
@@ -1009,6 +1010,7 @@ class ButtonMixin:
             user_key=key,
             # Only the
             form_id=form_id,
+            dg=self.dg,
             label=label,
             icon=icon,
             help=help,
@@ -1105,7 +1107,7 @@ def marshall_file(
         data_as_bytes = data.read() or b""
         mimetype = mimetype or "application/octet-stream"
     else:
-        raise StreamlitAPIException("Invalid binary data format: %s" % type(data))
+        raise StreamlitAPIException(f"Invalid binary data format: {type(data)}")
 
     if runtime.exists():
         file_url = runtime.get_instance().media_file_mgr.add(

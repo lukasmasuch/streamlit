@@ -166,6 +166,7 @@ function ChatInput({
           file.status.type === "uploaded" &&
           file.status.fileUrls.deleteUrl
         ) {
+          // eslint-disable-next-line @typescript-eslint/no-floating-promises -- TODO: Fix this
           uploadClient.deleteFile(file.status.fileUrls.deleteUrl)
         }
 
@@ -338,7 +339,7 @@ function ChatInput({
     if (element.setValue) {
       // We are intentionally setting this to avoid regularly calling this effect.
       // TODO: Update to match React best practices
-      // eslint-disable-next-line react-compiler/react-compiler
+      // eslint-disable-next-line react-hooks/react-compiler
       element.setValue = false
       const val = element.value || ""
       setValue(val)

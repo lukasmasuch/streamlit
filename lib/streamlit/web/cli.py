@@ -18,7 +18,7 @@ from __future__ import annotations
 
 import os
 import sys
-from typing import TYPE_CHECKING, Any, Callable, TypeVar
+from typing import TYPE_CHECKING, Any, Callable, Final, TypeVar
 
 # We cannot lazy-load click here because its used via decorators.
 import click
@@ -105,8 +105,8 @@ def configurator_options(func: F) -> F:
             help=parsed_parameter["description"],
             type=parsed_parameter["type"],
             multiple=parsed_parameter["multiple"],
-            **click_option_kwargs,
-        )  # type: ignore
+            **click_option_kwargs,  # type: ignore
+        )
         func = config_option(func)
     return func
 
@@ -140,8 +140,8 @@ def main(log_level: str = "info") -> None:
     if log_level:
         from streamlit.logger import get_logger
 
-        LOGGER = get_logger(__name__)
-        LOGGER.warning(
+        logger: Final = get_logger(__name__)
+        logger.warning(
             "Setting the log level using the --log_level flag is unsupported."
             "\nUse the --logger.level flag (after your streamlit command) instead."
         )
@@ -153,8 +153,6 @@ def help() -> None:  # noqa: A001
     # We use _get_command_line_as_string to run some error checks but don't do
     # anything with its return value.
     _get_command_line_as_string()
-
-    assert len(sys.argv) == 2  # This is always true, but let's assert anyway.
 
     # Pretend user typed 'streamlit --help' instead of 'streamlit help'.
     sys.argv[1] = "--help"
@@ -171,7 +169,6 @@ def main_version() -> None:
     # anything with its return value.
     _get_command_line_as_string()
 
-    assert len(sys.argv) == 2  # This is always true, but let's assert anyway.
     sys.argv[1] = "--version"
     main()
 
@@ -363,8 +360,13 @@ def test_prog_name() -> None:
 
     parent = click.get_current_context().parent
 
-    assert parent is not None
-    assert parent.command_path == "streamlit test"
+    if parent is None:
+        raise AssertionError("parent is None")
+
+    if parent.command_path != "streamlit test":
+        raise AssertionError(
+            f"Parent command path is {parent.command_path} not streamlit test."
+        )
 
 
 @main.command("init")

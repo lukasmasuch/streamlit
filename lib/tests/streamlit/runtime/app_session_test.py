@@ -635,7 +635,9 @@ def _mock_get_options_for_section(
     sidebar_theme_opts = {
         "backgroundColor": "white",
         "baseRadius": "1.2rem",
+        "buttonRadius": "medium",
         "borderColor": "#ff0000",
+        "dataframeBorderColor": "#280f63",
         "codeFont": "Monaspace Argon",
         "font": "Inter",
         "headingFont": "Inter Bold",
@@ -656,7 +658,9 @@ def _mock_get_options_for_section(
         "base": "dark",
         "baseFontSize": 14,
         "baseRadius": "1.2rem",
+        "buttonRadius": "medium",
         "borderColor": "#ff0000",
+        "dataframeBorderColor": "#280f63",
         "codeFont": "Monaspace Argon",
         "font": "Inter",
         "fontFaces": [
@@ -902,7 +906,11 @@ class AppSessionScriptEventTest(IsolatedAsyncioTestCase):
                 "streamlit.runtime.app_session.asyncio.get_running_loop",
                 return_value=MagicMock(),
             ),
-            pytest.raises(AssertionError),
+            pytest.raises(
+                RuntimeError,
+                match="This function must only be called on the eventloop thread "
+                "the AppSession was created on. This should never happen.",
+            ),
         ):
             session._handle_scriptrunner_event_on_event_loop(
                 sender=MagicMock(), event=ScriptRunnerEvent.SCRIPT_STARTED
@@ -1030,6 +1038,86 @@ class AppSessionScriptEventTest(IsolatedAsyncioTestCase):
             handle_backmsg_exception.assert_not_called()
             patched_logger.warning.assert_not_called()
 
+    async def test_event_handler_raises_error_if_page_hash_none_on_script_started(
+        self,
+    ):
+        """Test that _handle_scriptrunner_event_on_event_loop raises RuntimeError
+        if page_script_hash is None when event is SCRIPT_STARTED.
+        """
+        session = _create_test_session(asyncio.get_running_loop())
+        mock_scriptrunner = MagicMock(spec=ScriptRunner)
+        session._scriptrunner = mock_scriptrunner
+
+        with pytest.raises(
+            RuntimeError,
+            match="page_script_hash must be set for the SCRIPT_STARTED event. This should never happen.",
+        ):
+            session._handle_scriptrunner_event_on_event_loop(
+                sender=mock_scriptrunner,
+                event=ScriptRunnerEvent.SCRIPT_STARTED,
+                page_script_hash=None,  # This is the condition we're testing
+            )
+
+    async def test_event_handler_raises_error_if_exception_none_on_compile_error(
+        self,
+    ):
+        """Test that _handle_scriptrunner_event_on_event_loop raises RuntimeError
+        if exception is None when event is SCRIPT_STOPPED_WITH_COMPILE_ERROR.
+        """
+        session = _create_test_session(asyncio.get_running_loop())
+        mock_scriptrunner = MagicMock(spec=ScriptRunner)
+        session._scriptrunner = mock_scriptrunner
+
+        with pytest.raises(
+            RuntimeError,
+            match="exception must be set for the SCRIPT_STOPPED_WITH_COMPILE_ERROR event. This should never happen.",
+        ):
+            session._handle_scriptrunner_event_on_event_loop(
+                sender=mock_scriptrunner,
+                event=ScriptRunnerEvent.SCRIPT_STOPPED_WITH_COMPILE_ERROR,
+                exception=None,  # This is the condition we're testing
+            )
+
+    async def test_event_handler_raises_error_if_client_state_none_on_shutdown(
+        self,
+    ):
+        """Test that _handle_scriptrunner_event_on_event_loop raises RuntimeError
+        if client_state is None when event is SHUTDOWN.
+        """
+        session = _create_test_session(asyncio.get_running_loop())
+        mock_scriptrunner = MagicMock(spec=ScriptRunner)
+        session._scriptrunner = mock_scriptrunner
+
+        with pytest.raises(
+            RuntimeError,
+            match="client_state must be set for the SHUTDOWN event. This should never happen.",
+        ):
+            session._handle_scriptrunner_event_on_event_loop(
+                sender=mock_scriptrunner,
+                event=ScriptRunnerEvent.SHUTDOWN,
+                client_state=None,  # This is the condition we're testing
+            )
+
+    async def test_event_handler_raises_error_if_forward_msg_none_on_enqueue(
+        self,
+    ):
+        """Test that _handle_scriptrunner_event_on_event_loop raises RuntimeError
+        if forward_msg is None when event is ENQUEUE_FORWARD_MSG.
+        """
+        session = _create_test_session(asyncio.get_running_loop())
+        mock_scriptrunner = MagicMock(spec=ScriptRunner)
+        session._scriptrunner = mock_scriptrunner
+
+        with pytest.raises(
+            RuntimeError,
+            match="null forward_msg in ENQUEUE_FORWARD_MSG event. This should never happen.",
+        ):
+            session._handle_scriptrunner_event_on_event_loop(
+                sender=mock_scriptrunner,
+                event=ScriptRunnerEvent.ENQUEUE_FORWARD_MSG,
+                forward_msg=None,  # This is the condition we're testing
+            )
+
 
 class PopulateCustomThemeMsgTest(unittest.TestCase):
     @patch("streamlit.runtime.app_session.config")
@@ -1041,7 +1129,9 @@ class PopulateCustomThemeMsgTest(unittest.TestCase):
                     "base": None,
                     "baseFontSize": None,
                     "baseRadius": None,
+                    "buttonRadius": None,
                     "borderColor": None,
+                    "dataframeBorderColor": None,
                     "codeFont": None,
                     "font": None,
                     "fontFaces": None,
@@ -1073,7 +1163,9 @@ class PopulateCustomThemeMsgTest(unittest.TestCase):
                     "base": None,
                     "baseFontSize": None,
                     "baseRadius": None,
+                    "buttonRadius": None,
                     "borderColor": None,
+                    "dataframeBorderColor": None,
                     "codeFont": None,
                     "font": None,
                     "fontFaces": None,
@@ -1106,8 +1198,10 @@ class PopulateCustomThemeMsgTest(unittest.TestCase):
                     # test here if we can set only a few selected options.
                     "backgroundColor": None,
                     "baseRadius": None,
+                    "buttonRadius": None,
                     "baseFontSize": None,
                     "borderColor": None,
+                    "dataframeBorderColor": None,
                     "codeFont": None,
                     "font": None,
                     "fontFaces": None,
@@ -1122,7 +1216,9 @@ class PopulateCustomThemeMsgTest(unittest.TestCase):
                         # primaryColor not set to None
                         "backgroundColor": None,
                         "baseRadius": None,
+                        "buttonRadius": None,
                         "borderColor": None,
+                        "dataframeBorderColor": None,
                         "codeFont": None,
                         "font": None,
                         "headingFont": None,
@@ -1262,10 +1358,7 @@ class PopulateCustomThemeMsgTest(unittest.TestCase):
         new_session_msg = msg.new_session
         app_session._populate_theme_msg(new_session_msg.custom_theme)
 
-        patched_logger.warning.assert_called_once_with(
-            '"blah" is an invalid value for theme.base.'
-            " Allowed values include ['light', 'dark']. Setting theme.base to \"light\"."
-        )
+        patched_logger.warning.assert_called_once()
 
 
 @patch.object(

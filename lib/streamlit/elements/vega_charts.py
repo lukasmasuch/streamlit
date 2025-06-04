@@ -742,6 +742,7 @@ class VegaChartsMixin:
             size_from_user=None,
             width=width,
             height=height,
+            use_container_width=use_container_width,
         )
         return cast(
             "DeltaGenerator",
@@ -983,6 +984,7 @@ class VegaChartsMixin:
             width=width,
             height=height,
             stack=stack,
+            use_container_width=use_container_width,
         )
         return cast(
             "DeltaGenerator",
@@ -1248,7 +1250,9 @@ class VegaChartsMixin:
             size_from_user=None,
             width=width,
             height=height,
+            use_container_width=use_container_width,
             stack=stack,
+            horizontal=horizontal,
         )
         return cast(
             "DeltaGenerator",
@@ -1459,6 +1463,7 @@ class VegaChartsMixin:
             size_from_user=size,
             width=width,
             height=height,
+            use_container_width=use_container_width,
         )
         return cast(
             "DeltaGenerator",
@@ -1942,6 +1947,7 @@ class VegaChartsMixin:
                 "arrow_vega_lite_chart",
                 user_key=key,
                 form_id=vega_lite_proto.form_id,
+                dg=self.dg,
                 vega_lite_spec=vega_lite_proto.spec,
                 # The data is either in vega_lite_proto.data.data
                 # or in a named dataset in vega_lite_proto.datasets
